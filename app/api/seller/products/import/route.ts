@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
             data: {
               description: firstRow.description || existingProduct.description,
               category: firstRow.category,
-              images: firstRow.images && firstRow.images.length > 0 ? firstRow.images : existingProduct.images,
+              images: (firstRow.images && firstRow.images.length > 0 ? firstRow.images : existingProduct.images) as string[],
               isAvailable: firstRow.isAvailable !== undefined ? firstRow.isAvailable : existingProduct.isAvailable,
             },
           })
