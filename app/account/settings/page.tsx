@@ -570,7 +570,9 @@ export default function AccountSettingsPage() {
                       className="flex-1"
                     />
                     {profile.phoneVerified && (
-                      <CheckCircle className="h-5 w-5 text-green-500" title="Phone verified" />
+                      <span title="Phone verified">
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                      </span>
                     )}
                   </div>
                   <p className="text-xs text-gray-500 mt-1">Nigerian phone numbers only</p>
