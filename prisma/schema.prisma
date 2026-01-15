@@ -1,0 +1,576 @@
+// Nigerian Marketplace Database Schema
+// Production-ready schema for e-commerce marketplace with escrow payments
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// AUTHENTICATION & USER MANAGEMENT
+// ============================================
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  emailVerified   DateTime?
+  password        String? // Nullable for SSO users
+  name            String?
+  phoneNumber     String?   @unique
+  phoneVerified   Boolean   @default(false)
+  phoneVerifiedAt DateTime?
+  image           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  accounts       Account[]
+  sessions       Session[]
+  roles          UserRole[]
+  shop           Shop?
+  orders         Order[]    @relation("BuyerOrders")
+  deliveries     Delivery[]
+  reviews        Review[]
+  disputes       Dispute[]  @relation("DisputeBuyer")
+  sellerDisputes Dispute[]  @relation("DisputeSeller")
+  addresses      Address[]
+  notifications  Notification[]
+  wishlistItems  Wishlist[]
+  riderRatings   RiderRating[] @relation("RiderRatings")
+  riderRatingBuyer RiderRating[] @relation("RiderRatingBuyer")
+
+  @@index([email])
+  @@index([phoneNumber])
+}
+
+// ============================================
+// ADDRESS MANAGEMENT
+// ============================================
+
+model Address {
+  id          String   @id @default(cuid())
+  userId      String
+  label       String?  // e.g., "Home", "Work", "Office"
+  street      String   // Street address, house number
+  city        String
+  state       String
+  postalCode  String?  // Optional postal code
+  country     String   @default("Nigeria")
+  addressText String?  @db.Text // Full formatted address from Google Places
+  latitude    Float?   // Latitude for distance calculation
+  longitude   Float?   // Longitude for distance calculation
+  isDefault   Boolean  @default(false)
+  phone       String?  // Contact phone for this address
+  notes       String?  @db.Text // Delivery instructions
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, isDefault])
+  @@index([latitude, longitude]) // For distance queries
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================
+// ROLE MANAGEMENT (Multi-role system)
+// ============================================
+
+enum RoleType {
+  BUYER
+  SELLER
+  RIDER
+  ADMIN
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  role      RoleType
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Seller-specific fields
+  sellerStatus    SellerStatus? @default(PENDING)
+  kycSubmitted    Boolean       @default(false)
+  kycApproved     Boolean       @default(false)
+  kycApprovedAt   DateTime?
+  kycRejectedAt   DateTime?
+  rejectionReason String?       @db.Text
+
+  // Rider-specific fields
+  riderStatus      RiderStatus? @default(PENDING)
+  isOnline         Boolean      @default(false) // Rider availability status
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role])
+  @@index([userId])
+  @@index([role, sellerStatus])
+  @@index([role, riderStatus])
+}
+
+enum SellerStatus {
+  PENDING // Awaiting admin approval
+  APPROVED // Active seller
+  SUSPENDED // Temporarily suspended
+  REJECTED // KYC rejected
+}
+
+enum RiderStatus {
+  PENDING // Awaiting admin approval
+  APPROVED // Active rider
+  SUSPENDED // Temporarily suspended
+  REJECTED // Application rejected
+}
+
+// ============================================
+// SHOP MANAGEMENT
+// ============================================
+
+model Shop {
+  id           String   @id @default(cuid())
+  userId       String   @unique // One shop per seller
+  name         String
+  description  String?  @db.Text
+  logo         String?
+  banner       String?
+  address      String?
+  city         String?
+  state        String?
+  latitude     Float?   // Latitude for distance calculation
+  longitude    Float?   // Longitude for distance calculation
+  isActive     Boolean  @default(true)
+  rating       Float    @default(0)
+  totalReviews Int      @default(0)
+  operatingHours String? @db.Text // JSON string: { "monday": { "open": "08:00", "close": "18:00", "closed": false }, ... }
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products Product[]
+  orders   Order[]
+  reviews  Review[]
+
+  @@index([userId])
+  @@index([isActive])
+  @@index([latitude, longitude]) // For distance queries
+}
+
+// ============================================
+// PRODUCT MANAGEMENT
+// ============================================
+
+enum ProductCategory {
+  FOODSTUFFS
+  MEAT_PROTEIN
+  LIVE_ANIMALS
+  PROCESSED_FOODS
+}
+
+model Product {
+  id          String          @id @default(cuid())
+  shopId      String
+  name        String
+  description String?         @db.Text
+  category    ProductCategory
+  images      String[] // Array of image URLs
+  isAvailable Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relations
+  shop         Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  pricingUnits PricingUnit[]
+  orderItems   OrderItem[]
+  wishlistItems Wishlist[]
+
+  @@index([shopId])
+  @@index([category])
+  @@index([isAvailable])
+  @@index([category, isAvailable]) // Composite index for common query pattern
+  @@index([createdAt]) // For ordering
+}
+
+// Dynamic pricing units - one product can have multiple units
+model PricingUnit {
+  id        String   @id @default(cuid())
+  productId String
+  unit      String // kg, bag, piece, animal, basket, mudu, paint, custom
+  price     Float // Price in Naira
+  stock     Int? // Optional stock quantity
+  lowStockThreshold Int? // Alert when stock falls below this
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product      Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems   OrderItem[]
+  stockHistory StockHistory[]
+
+  @@index([productId])
+  @@index([isActive])
+  @@index([stock]) // For low stock queries
+}
+
+// ============================================
+// ORDER MANAGEMENT
+// ============================================
+
+enum OrderStatus {
+  PENDING // Order placed, payment pending
+  PAID // Payment confirmed, awaiting preparation
+  PREPARING // Seller preparing order
+  OUT_FOR_DELIVERY // Assigned to rider, in transit
+  DELIVERED // Delivered to buyer
+  CANCELLED // Order cancelled
+  DISPUTED // Order in dispute
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique // Human-readable order number
+  buyerId         String
+  shopId          String
+  status          OrderStatus @default(PENDING)
+  subtotal        Float // Sum of items before fees
+  deliveryFee     Float       @default(0)
+  platformFee     Float       @default(0) // Commission
+  total           Float // Total amount
+  deliveryAddress String      @db.Text
+  deliveryCity    String
+  deliveryState   String
+  deliveryPhone   String // Contact for delivery
+  deliveryLatitude Float? // Delivery address latitude
+  deliveryLongitude Float? // Delivery address longitude
+  notes           String?     @db.Text
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  deliveredAt     DateTime?
+  cancelledAt     DateTime?
+
+  // Relations
+  buyer    User        @relation("BuyerOrders", fields: [buyerId], references: [id])
+  shop     Shop        @relation(fields: [shopId], references: [id])
+  items    OrderItem[]
+  payment  Payment?
+  delivery Delivery?
+  dispute  Dispute?
+  review   Review?
+  riderRating RiderRating? @relation("RiderRatingOrder")
+
+  @@index([buyerId])
+  @@index([shopId])
+  @@index([status])
+  @@index([orderNumber])
+}
+
+model OrderItem {
+  id            String   @id @default(cuid())
+  orderId       String
+  productId     String
+  pricingUnitId String
+  quantity      Int
+  unitPrice     Float // Price at time of order
+  total         Float // quantity * unitPrice
+  createdAt     DateTime @default(now())
+
+  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product     @relation(fields: [productId], references: [id])
+  pricingUnit PricingUnit @relation(fields: [pricingUnitId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+// ============================================
+// PAYMENT & ESCROW SYSTEM
+// ============================================
+
+enum PaymentStatus {
+  PENDING // Payment initiated
+  PROCESSING // Being processed by Paystack
+  COMPLETED // Payment successful, in escrow
+  RELEASED // Released to seller
+  REFUNDED // Refunded to buyer
+  FAILED // Payment failed
+}
+
+enum EscrowStatus {
+  HELD // Funds held in escrow
+  RELEASED // Released to seller
+  REFUNDED // Refunded to buyer
+  DISPUTED // In dispute, funds frozen
+}
+
+model Payment {
+  id           String        @id @default(cuid())
+  orderId      String        @unique
+  paystackRef  String?       @unique // Paystack transaction reference
+  refundRef    String?       // Paystack refund ID
+  amount       Float
+  status       PaymentStatus @default(PENDING)
+  escrowStatus EscrowStatus  @default(HELD)
+  refundStatus String?       // Paystack refund status: 'pending' | 'processing' | 'needs-attention' | 'failed' | 'processed'
+  paidAt       DateTime?
+  releasedAt   DateTime?
+  refundedAt   DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([paystackRef])
+  @@index([status])
+  @@index([escrowStatus])
+}
+
+// ============================================
+// DELIVERY SYSTEM
+// ============================================
+
+enum DeliveryStatus {
+  PENDING // Awaiting rider assignment
+  ASSIGNED // Rider assigned
+  PICKED_UP // Rider picked up from seller
+  IN_TRANSIT // On the way
+  DELIVERED // Delivered
+  FAILED // Delivery failed
+}
+
+model Delivery {
+  id            String         @id @default(cuid())
+  orderId       String         @unique
+  riderId       String?
+  status        DeliveryStatus @default(PENDING)
+  estimatedTime DateTime? // Estimated delivery time
+  pickedUpAt    DateTime?
+  deliveredAt   DateTime?
+  notes         String?        @db.Text
+  riderLatitude Float? // Current rider location latitude
+  riderLongitude Float? // Current rider location longitude
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  rider User? @relation(fields: [riderId], references: [id])
+  riderRating RiderRating?
+
+  @@index([orderId])
+  @@index([riderId])
+  @@index([status])
+}
+
+// ============================================
+// REVIEWS & RATINGS
+// ============================================
+
+model Review {
+  id        String   @id @default(cuid())
+  orderId   String   @unique // One review per order
+  buyerId   String
+  shopId    String
+  rating    Int // 1-5 stars
+  comment   String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  buyer User  @relation(fields: [buyerId], references: [id])
+  shop  Shop  @relation(fields: [shopId], references: [id])
+
+  @@index([shopId])
+  @@index([buyerId])
+  @@index([orderId])
+}
+
+model RiderRating {
+  id        String   @id @default(cuid())
+  deliveryId String  @unique // One rating per delivery
+  orderId   String   @unique // One rating per order
+  riderId   String
+  buyerId   String
+  rating    Int // 1-5 stars
+  comment   String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  order    Order    @relation("RiderRatingOrder", fields: [orderId], references: [id], onDelete: Cascade)
+  rider    User     @relation("RiderRatings", fields: [riderId], references: [id])
+  buyer    User     @relation("RiderRatingBuyer", fields: [buyerId], references: [id])
+
+  @@index([riderId])
+  @@index([buyerId])
+  @@index([deliveryId])
+  @@index([orderId])
+}
+
+// ============================================
+// DISPUTE MANAGEMENT
+// ============================================
+
+enum DisputeStatus {
+  OPEN // Dispute opened
+  IN_REVIEW // Admin reviewing
+  RESOLVED // Dispute resolved
+  CLOSED // Dispute closed
+}
+
+enum DisputeResolution {
+  BUYER_WINS // Refund buyer
+  SELLER_WINS // Release to seller
+  PARTIAL // Partial refund
+}
+
+model Dispute {
+  id          String             @id @default(cuid())
+  orderId     String             @unique
+  buyerId     String
+  sellerId    String
+  status      DisputeStatus      @default(OPEN)
+  reason      String             @db.Text
+  buyerNotes  String?            @db.Text
+  sellerNotes String?            @db.Text
+  adminNotes  String?            @db.Text
+  resolution  DisputeResolution?
+  resolvedAt  DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  order  Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  buyer  User  @relation("DisputeBuyer", fields: [buyerId], references: [id])
+  seller User  @relation("DisputeSeller", fields: [sellerId], references: [id])
+
+  @@index([orderId])
+  @@index([status])
+  @@index([buyerId])
+  @@index([sellerId])
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+enum NotificationType {
+  ORDER_PLACED
+  ORDER_STATUS_UPDATE
+  PAYMENT_RECEIVED
+  PAYMENT_RELEASED
+  DISPUTE_CREATED
+  DISPUTE_RESOLVED
+  REVIEW_RECEIVED
+  DELIVERY_ASSIGNED
+  DELIVERY_UPDATE
+  LOW_STOCK_ALERT
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String           @db.Text
+  link      String? // URL to related resource
+  read      Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+}
+
+// ============================================
+// INVENTORY MANAGEMENT
+// ============================================
+
+enum StockChangeType {
+  ORDER_PLACED      // Stock decreased due to order
+  ORDER_CANCELLED   // Stock restored due to order cancellation
+  MANUAL_UPDATE     // Manual stock adjustment by seller
+  RESTOCKED         // Stock increased (restocking)
+}
+
+model StockHistory {
+  id            String          @id @default(cuid())
+  pricingUnitId String
+  changeType    StockChangeType
+  quantity      Int // Positive for increase, negative for decrease
+  previousStock Int
+  newStock      Int
+  orderId       String? // If related to an order
+  notes         String? @db.Text
+  createdAt     DateTime        @default(now())
+
+  pricingUnit PricingUnit @relation(fields: [pricingUnitId], references: [id], onDelete: Cascade)
+
+  @@index([pricingUnitId])
+  @@index([createdAt])
+  @@index([orderId])
+}
+
+// ============================================
+// WISHLIST / FAVORITES
+// ============================================
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId]) // One product per user in wishlist
+  @@index([userId])
+  @@index([productId])
+}
