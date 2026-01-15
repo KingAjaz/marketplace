@@ -13,7 +13,7 @@ interface CSVRow {
   name: string
   description?: string
   category: ProductCategory
-  images?: string
+  images?: string[]
   unit: string
   price: number
   stock?: number | null
@@ -192,7 +192,7 @@ export async function POST(request: NextRequest) {
               name: productName,
               description: firstRow.description || null,
               category: firstRow.category,
-              images: firstRow.images && firstRow.images.length > 0 ? firstRow.images : [],
+              images: (firstRow.images && firstRow.images.length > 0 ? firstRow.images : []) as string[],
               isAvailable: firstRow.isAvailable !== undefined ? firstRow.isAvailable : true,
               pricingUnits: {
                 create: pricingRows.map((row) => ({
