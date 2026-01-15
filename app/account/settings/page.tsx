@@ -539,9 +539,13 @@ export default function AccountSettingsPage() {
                       className="bg-gray-50"
                     />
                     {profile.emailVerified ? (
-                      <CheckCircle className="h-5 w-5 text-green-500" title="Email verified" />
+                      <span title="Email verified">
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                      </span>
                     ) : (
-                      <XCircle className="h-5 w-5 text-yellow-500" title="Email not verified" />
+                      <span title="Email not verified">
+                        <XCircle className="h-5 w-5 text-yellow-500" />
+                      </span>
                     )}
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
