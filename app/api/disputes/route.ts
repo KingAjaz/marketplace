@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
           },
         },
         dispute: true,
+        payment: true,
       },
     })
 
