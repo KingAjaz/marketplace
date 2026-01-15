@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { OrderStatus, PaymentStatus, EscrowStatus } from '@prisma/client'
+import { OrderStatus, PaymentStatus, EscrowStatus, NotificationType } from '@prisma/client'
 import { restoreStockFromOrder } from '@/lib/inventory'
 import { refundPaystackTransaction } from '@/lib/paystack'
 
@@ -195,7 +195,7 @@ export async function POST(
     }
 
     // Create notifications
-    const { createNotification, NotificationType } = await import('@/lib/notifications')
+    const { createNotification } = await import('@/lib/notifications')
     const cancellationMessage = isSeller
       ? `Order #${order.orderNumber} has been cancelled by the seller.${refundInitiated && refundStatus !== 'processed' ? ' Refund is being processed.' : ''}${finalReason ? ` Reason: ${finalReason}` : ''}`
       : `Your order #${order.orderNumber} has been cancelled.${refundInitiated && refundStatus !== 'processed' ? ' Refund is being processed.' : ''}`
