@@ -9,7 +9,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { NotificationType } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
   try {
@@ -106,27 +105,5 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-/**
- * Helper function to create notifications (used internally)
- */
-export async function createNotification(
-  userId: string,
-  type: NotificationType,
-  title: string,
-  message: string,
-  link?: string
-) {
-  try {
-    await prisma.notification.create({
-      data: {
-        userId,
-        type,
-        title,
-        message,
-        link,
-      },
-    })
-  } catch (error) {
-    console.error('Failed to create notification:', error)
-  }
-}
+// Note: createNotification helper function is available in @/lib/notifications
+// Do not export helper functions from route files - only HTTP method handlers (GET, POST, etc.)
