@@ -205,7 +205,7 @@ export async function GET(request: NextRequest) {
 
     const totalOrders = periodOrders.length
     const totalRevenue = periodOrders.reduce((sum, order) => {
-      if (order.payment && order.payment.length > 0) {
+      if (order.payment) {
         return sum + (order.total - order.platformFee)
       }
       return sum
