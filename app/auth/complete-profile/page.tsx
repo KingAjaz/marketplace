@@ -10,7 +10,6 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { update } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -19,7 +18,7 @@ import { normalizePhoneNumber, validateNigerianPhone } from '@/lib/utils'
 import { AddressAutocomplete } from '@/components/address-autocomplete'
 
 export default function CompleteProfilePage() {
-  const { data: session, status } = useSession()
+  const { data: session, status, update } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [phone, setPhone] = useState('')
