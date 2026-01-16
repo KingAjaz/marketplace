@@ -179,7 +179,7 @@ export function RiceAnimate({
           className="w-full h-full object-contain"
           style={{
             backgroundColor: '#f0fdf4', // Match green-50 background exactly
-            imageRendering: 'high-quality',
+            imageRendering: 'auto',
           }}
         />
       </div>
