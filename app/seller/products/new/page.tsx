@@ -114,12 +114,12 @@ export default function NewProductPage() {
   const handlePricingUnitChange = (
     index: number,
     field: 'unit' | 'price' | 'stock',
-    value: string | number
+    value: string | number | null
   ) => {
     const newUnits = [...formData.pricingUnits]
     newUnits[index] = {
       ...newUnits[index],
-      [field]: field === 'price' || field === 'stock' ? Number(value) : value,
+      [field]: field === 'price' ? Number(value) : field === 'stock' ? (value !== null ? Number(value) : null) : value,
     }
     setFormData({ ...formData, pricingUnits: newUnits })
   }
