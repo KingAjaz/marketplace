@@ -225,7 +225,7 @@ export default function MarketPage() {
                           <Package className="h-4 w-4" />
                           <span>{shop.productCount} products</span>
                         </div>
-                        {shop.distance != null && (
+                        {shop.distance != null && typeof shop.distance === 'number' && (
                           <div className="flex items-center gap-1 text-sm text-primary font-medium">
                             <MapPin className="h-3 w-3" />
                             <span>{formatDistance(shop.distance)}</span>
