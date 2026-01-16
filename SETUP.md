@@ -45,11 +45,20 @@ NEXTAUTH_URL="http://localhost:3000"
 For Google OAuth:
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create OAuth 2.0 credentials
-3. Add to `.env`:
+3. **IMPORTANT**: Add the correct redirect URI:
+   - For local development: `http://localhost:3000/api/auth/callback/google`
+   - For production: `https://your-domain.vercel.app/api/auth/callback/google`
+4. Add to `.env`:
 ```env
 GOOGLE_CLIENT_ID="your-client-id"
 GOOGLE_CLIENT_SECRET="your-client-secret"
 ```
+
+**For Vercel Deployment:**
+1. Set `NEXTAUTH_URL` in Vercel environment variables to your production URL (e.g., `https://marketplace-pyg4.vercel.app`)
+2. Ensure `NEXTAUTH_SECRET` is set in Vercel environment variables
+3. In Google Cloud Console, add the redirect URI: `https://your-domain.vercel.app/api/auth/callback/google`
+4. Make sure `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set in Vercel environment variables
 
 ### 6. Configure Google Places API (Required for Address Autocomplete)
 

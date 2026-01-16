@@ -18,6 +18,29 @@ export default function SignInPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // Check for OAuth error from query params
+  useEffect(() => {
+    const errorParam = searchParams.get('error')
+    if (errorParam) {
+      const errorMessages: { [key: string]: string } = {
+        Configuration: 'There is a problem with the server configuration. Please contact support.',
+        AccessDenied: 'You do not have permission to sign in.',
+        Verification: 'The verification token has expired or has already been used.',
+        Callback: 'OAuth callback error. Please check your Google OAuth configuration.',
+        OAuthSignin: 'Error in constructing an authorization URL.',
+        OAuthCallback: 'Error in handling the response from an OAuth provider.',
+        OAuthCreateAccount: 'Could not create OAuth account in the database.',
+        EmailCreateAccount: 'Could not create email account in the database.',
+        Callback: 'OAuth callback error. Please ensure your redirect URI is correctly configured in Google Cloud Console.',
+        OAuthAccountNotLinked: 'To confirm your identity, sign in with the same account you used originally.',
+        EmailSignin: 'The e-mail could not be sent.',
+        CredentialsSignin: 'The credentials you provided are incorrect.',
+        SessionRequired: 'Please sign in to access this page.',
+      }
+      setError(errorMessages[errorParam] || `An error occurred: ${errorParam}`)
+    }
+  }, [searchParams])
+
   // Redirect if already authenticated
   useEffect(() => {
     if (status === 'authenticated' && session) {
