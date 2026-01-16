@@ -208,10 +208,10 @@ export default function SellerAnalyticsPage() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis tickFormatter={(value) => `₦${(value / 1000).toFixed(0)}k`} />
-                <Tooltip 
-                  formatter={(value: number) => formatCurrency(value)}
-                  labelFormatter={(label) => `Month: ${label}`}
-                />
+                 <Tooltip 
+                   formatter={(value: number | undefined) => value !== undefined ? formatCurrency(value) : ''}
+                   labelFormatter={(label) => `Month: ${label}`}
+                 />
                 <Legend />
                 <Line 
                   type="monotone" 
