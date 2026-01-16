@@ -210,7 +210,7 @@ export default function ProductPage() {
                   className="w-full"
                   size="lg"
                   onClick={handleAddToCart}
-                  disabled={!selectedUnit || (selectedUnitData?.stock !== null && selectedUnitData.stock < quantity)}
+                  disabled={!selectedUnit || (selectedUnitData?.stock !== null && selectedUnitData?.stock !== undefined && selectedUnitData.stock < quantity)}
                 >
                   <ShoppingCart className="h-5 w-5 mr-2" />
                   Add to Cart
