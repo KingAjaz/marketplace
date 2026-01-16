@@ -25,6 +25,7 @@ interface Shop {
   rating: number
   totalReviews: number
   productCount: number
+  distance?: number | null
 }
 
 export default function MarketPage() {
