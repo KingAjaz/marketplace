@@ -25,7 +25,7 @@ export function isShopOpen(operatingHours: string | null): boolean {
   try {
     const hours: OperatingHours = JSON.parse(operatingHours)
     const now = new Date()
-    const dayName = now.toLocaleLowerCase('en-US', { weekday: 'long' }).toLowerCase()
+    const dayName = now.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
     const dayHours = hours[dayName]
 
     if (!dayHours || dayHours.closed) {
@@ -57,7 +57,7 @@ export function getShopStatus(operatingHours: string | null): {
   try {
     const hours: OperatingHours = JSON.parse(operatingHours)
     const now = new Date()
-    const dayName = now.toLocaleLowerCase('en-US', { weekday: 'long' }).toLowerCase()
+    const dayName = now.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
     const dayHours = hours[dayName]
 
     if (!dayHours || dayHours.closed) {
