@@ -37,7 +37,7 @@ interface Notification {
 }
 
 export default function NotificationsDropdown() {
-  const { data: session } = useSession()
+  const { user, status } = useAuth()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isOpen, setIsOpen] = useState(false)
@@ -45,13 +45,13 @@ export default function NotificationsDropdown() {
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (session) {
+    if (status === 'authenticated' && user) {
       fetchNotifications()
       // Poll for new notifications every 30 seconds
       const interval = setInterval(fetchNotifications, 30000)
       return () => clearInterval(interval)
     }
-  }, [session])
+  }, [status, user])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

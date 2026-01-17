@@ -33,22 +33,22 @@ interface WishlistItem {
 }
 
 export function useWishlist() {
-  const { data: session } = useSession()
+  const { user, status } = useAuth()
   const [items, setItems] = useState<WishlistItem[]>([])
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
 
   useEffect(() => {
-    if (session?.user) {
+    if (status === 'authenticated' && user) {
       fetchWishlist()
     } else {
       setItems([])
       setLoading(false)
     }
-  }, [session])
+  }, [status, user])
 
   const fetchWishlist = async () => {
-    if (!session?.user) return
+    if (!user) return
 
     setLoading(true)
     try {
