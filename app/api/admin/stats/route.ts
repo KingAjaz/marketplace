@@ -3,33 +3,36 @@ export const dynamic = 'force-dynamic'
  * Admin Dashboard Stats API
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getCurrentUser } from '@/lib/auth-supabase'
 import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    const user = await getCurrentUser()
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Check if user has admin role
-    const userRole = await prisma.userRole.findFirst({
-      where: {
-        userId: session.user.id,
-        role: 'ADMIN',
-        isActive: true,
-      },
-    })
+    const hasAdminRole = user.roles.includes('ADMIN')
+    if (!hasAdminRole) {
+      // Double-check in database for active status
+      const userRole = await prisma.userRole.findFirst({
+        where: {
+          userId: user.id,
+          role: 'ADMIN',
+          isActive: true,
+        },
+      })
 
-    if (!userRole) {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      )
+      if (!userRole) {
+        return NextResponse.json(
+          { error: 'Admin access required' },
+          { status: 403 }
+        )
+      }
     }
 
     // Get stats - optimized with aggregation

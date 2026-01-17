@@ -1,32 +1,34 @@
-import NextAuth from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { NextRequest, NextResponse } from 'next/server'
 
-// Temporarily restored during migration to Supabase Auth
-// This route is needed for middleware and API routes that still use NextAuth
-// NOTE: NEXTAUTH_SECRET must be set in Vercel environment variables for this to work
-// Once migration is complete, this route and NEXTAUTH_SECRET will be removed
+/**
+ * NextAuth Route Handler - DISABLED
+ * 
+ * This route is disabled as we're migrating to Supabase Auth.
+ * 
+ * ⚠️ Some API routes still use getServerSession from NextAuth.
+ * They will need to be migrated to use getCurrentUser from @/lib/auth-supabase.
+ * 
+ * Once all routes are migrated, this file can be deleted.
+ */
 
-// Provide a fallback secret for development/migration, but warn about it
-// In production, this should always be set in environment variables
-if (!process.env.NEXTAUTH_SECRET) {
-  console.warn('[NextAuth] WARNING: NEXTAUTH_SECRET is not set. Using temporary secret for migration. Please set NEXTAUTH_SECRET in Vercel environment variables.')
-  // Use a temporary secret to prevent Configuration errors during migration
-  // This is NOT secure for production and should be replaced
-  process.env.NEXTAUTH_SECRET = 'temp-migration-secret-change-me-in-production-' + Date.now()
+export async function GET(request: NextRequest) {
+  return NextResponse.json(
+    {
+      error: 'NextAuth is disabled. This app now uses Supabase Auth.',
+      message: 'Please use Supabase Auth endpoints for authentication.',
+      documentation: 'See MIGRATION_STATUS.md for migration details',
+    },
+    { status: 410 } // 410 Gone - resource no longer available
+  )
 }
 
-let handler: any
-
-try {
-  handler = NextAuth(authOptions)
-} catch (error: any) {
-  console.error('[NextAuth] Failed to initialize:', error)
-  // If initialization fails, redirect to error page
-  handler = async (req: NextRequest) => {
-    const baseUrl = process.env.NEXTAUTH_URL || req.headers.get('origin') || 'http://localhost:3000'
-    return NextResponse.redirect(new URL('/auth/error?error=Configuration', baseUrl))
-  }
+export async function POST(request: NextRequest) {
+  return NextResponse.json(
+    {
+      error: 'NextAuth is disabled. This app now uses Supabase Auth.',
+      message: 'Please use Supabase Auth endpoints for authentication.',
+      documentation: 'See MIGRATION_STATUS.md for migration details',
+    },
+    { status: 410 } // 410 Gone - resource no longer available
+  )
 }
-
-export { handler as GET, handler as POST }
