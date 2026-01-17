@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import { signIn, useSession } from 'next-auth/react'
+import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -11,7 +11,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { checkPasswordStrength } from '@/lib/password-strength'
 
 export default function SignUpPage() {
-  const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
@@ -22,12 +21,14 @@ export default function SignUpPage() {
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [checkingSession, setCheckingSession] = useState(true)
 
   // Check if user is already authenticated
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
+        const supabaseClient = createClient()
+        const { data: { session } } = await supabaseClient.auth.getSession()
         if (session) {
           // Fetch user profile to check phone number
           const response = await fetch('/api/auth/profile')
@@ -45,10 +46,12 @@ export default function SignUpPage() {
         }
       } catch (err) {
         console.error('Session check error:', err)
+      } finally {
+        setCheckingSession(false)
       }
     }
     checkSession()
-  }, [supabase, router, searchParams])
+  }, [router, searchParams])
 
   // Calculate password strength
   const passwordStrength = useMemo(() => {
@@ -89,21 +92,10 @@ export default function SignUpPage() {
         return
       }
 
-      // Auto sign in after signup
-      const result = await signIn('credentials', {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
-      })
-
-      if (result?.error) {
-        setError('Account created but sign in failed. Please try signing in.')
-      } else {
-        // Refresh session to get updated user data
-        router.refresh()
-        // Redirect to complete profile to add phone number
-        router.push('/auth/complete-profile')
-      }
+      // Account created successfully - redirect to sign in
+      // Note: The signup API creates users in Prisma. Once migrated to Supabase Auth,
+      // we'll need to create users in Supabase Auth as well for email/password auth.
+      router.push('/auth/signin?message=Account created successfully. Please sign in.')
     } catch (err) {
       setError('An error occurred. Please try again.')
     } finally {
@@ -114,7 +106,8 @@ export default function SignUpPage() {
   const handleGoogleSignIn = async () => {
     setError('')
     try {
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      const supabaseClient = createClient()
+      const { error: oauthError } = await supabaseClient.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback?next=/auth/complete-profile`,
@@ -130,7 +123,7 @@ export default function SignUpPage() {
   }
 
   // Show loading while checking session
-  if (status === 'loading') {
+  if (checkingSession) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -139,11 +132,6 @@ export default function SignUpPage() {
         </div>
       </div>
     )
-  }
-
-  // Don't render if already authenticated (redirect will happen)
-  if (status === 'authenticated') {
-    return null
   }
 
   return (
