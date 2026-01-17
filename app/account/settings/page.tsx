@@ -846,7 +846,7 @@ export default function AccountSettingsPage() {
                       className="w-full"
                       disabled={
                         deleteData.confirmDelete !== 'DELETE' ||
-                        (session?.user?.email?.includes('@') && !deleteData.password)
+                        (user?.email?.includes('@') && !deleteData.password)
                       }
                     >
                       Delete My Account
