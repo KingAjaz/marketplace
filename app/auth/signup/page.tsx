@@ -23,20 +23,32 @@ export default function SignUpPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Redirect if already authenticated
+  // Check if user is already authenticated
   useEffect(() => {
-    if (status === 'authenticated' && session) {
-      // If user has phone number, redirect to home or callback URL
-      if (session.user?.phoneNumber) {
-        const callbackUrl = searchParams.get('callbackUrl') || '/'
-        router.push(callbackUrl)
-        router.refresh()
-      } else {
-        // If no phone number, redirect to complete profile
-        router.push('/auth/complete-profile')
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          // Fetch user profile to check phone number
+          const response = await fetch('/api/auth/profile')
+          if (response.ok) {
+            const userData = await response.json()
+            if (userData.phoneNumber) {
+              const callbackUrl = searchParams.get('callbackUrl') || '/'
+              router.push(callbackUrl)
+            } else {
+              router.push('/auth/complete-profile')
+            }
+          } else {
+            router.push('/auth/complete-profile')
+          }
+        }
+      } catch (err) {
+        console.error('Session check error:', err)
       }
     }
-  }, [status, session, router, searchParams])
+    checkSession()
+  }, [supabase, router, searchParams])
 
   // Calculate password strength
   const passwordStrength = useMemo(() => {
@@ -102,9 +114,18 @@ export default function SignUpPage() {
   const handleGoogleSignIn = async () => {
     setError('')
     try {
-      await signIn('google', { callbackUrl: '/auth/complete-profile' })
-    } catch (err) {
-      setError('Failed to sign in with Google')
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=/auth/complete-profile`,
+        },
+      })
+
+      if (oauthError) {
+        setError(oauthError.message || 'Failed to sign in with Google')
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign in with Google')
     }
   }
 
