@@ -79,7 +79,7 @@ export default function AddressesPage() {
       return
     }
     fetchAddresses()
-  }, [session, router])
+  }, [user, status, router])
 
   const fetchAddresses = async () => {
     try {
