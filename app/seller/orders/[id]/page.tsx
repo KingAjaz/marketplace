@@ -98,7 +98,7 @@ interface Order {
 export default function SellerOrderDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const orderId = params.id as string
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)

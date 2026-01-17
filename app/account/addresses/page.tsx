@@ -240,7 +240,7 @@ export default function AddressesPage() {
     }
   }
 
-  if (!session) {
+  if (!user) {
     return null
   }
 

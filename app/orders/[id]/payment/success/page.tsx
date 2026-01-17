@@ -21,7 +21,7 @@ export default function PaymentSuccessPage() {
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { data: session } = useSession()
+  const { user, status } = useAuth()
   const orderId = params.id as string
   const reference = searchParams.get('reference') || searchParams.get('trxref')
   const { clearCart } = useCart()

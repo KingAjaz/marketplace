@@ -48,7 +48,7 @@ interface Shop {
 }
 
 export default function OrdersPage() {
-  const { data: session, status } = useSession()
+  const { user, status } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
   const [orders, setOrders] = useState<Order[]>([])

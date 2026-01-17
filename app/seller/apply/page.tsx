@@ -18,7 +18,7 @@ import { Store, CheckCircle, Clock } from 'lucide-react'
 import Link from 'next/link'
 
 export default function SellerApplyPage() {
-  const { data: session, status } = useSession()
+  const { user, status } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
