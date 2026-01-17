@@ -1,27 +1,11 @@
-import { NextResponse } from 'next/server'
+import NextAuth from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
-// Temporarily disabled during migration to Supabase Auth
-// NextAuth is being replaced with Supabase Auth
-// This route is kept for backward compatibility but will return an error
+// Temporarily restored during migration to Supabase Auth
+// This route is needed for middleware and API routes that still use NextAuth
+// NOTE: NEXTAUTH_SECRET must be set in Vercel environment variables for this to work
+// Once migration is complete, this route and NEXTAUTH_SECRET will be removed
 
-export async function GET() {
-  return NextResponse.json(
-    { 
-      error: 'NextAuth is being migrated to Supabase Auth',
-      message: 'Please use Supabase Auth endpoints for authentication.',
-      documentation: 'See SUPABASE_AUTH_MIGRATION.md for migration details'
-    },
-    { status: 501 }
-  )
-}
+const handler = NextAuth(authOptions)
 
-export async function POST() {
-  return NextResponse.json(
-    { 
-      error: 'NextAuth is being migrated to Supabase Auth',
-      message: 'Please use Supabase Auth endpoints for authentication.',
-      documentation: 'See SUPABASE_AUTH_MIGRATION.md for migration details'
-    },
-    { status: 501 }
-  )
-}
+export { handler as GET, handler as POST }
