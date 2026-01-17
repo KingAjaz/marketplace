@@ -79,16 +79,40 @@ export default function AuthErrorPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {error === 'Callback' && (
-            <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded text-sm">
-              <p className="font-semibold mb-2">To fix this issue:</p>
-              <ol className="list-decimal list-inside space-y-1">
-                <li>Go to <a href="https://console.cloud.google.com" target="_blank" rel="noopener noreferrer" className="underline">Google Cloud Console</a></li>
-                <li>Navigate to APIs & Services → Credentials</li>
-                <li>Click on your OAuth 2.0 Client ID</li>
-                <li>Add this redirect URI: <code className="bg-yellow-100 px-1 rounded">https://marketplace-pyg4.vercel.app/api/auth/callback/google</code></li>
-                <li>Save the changes</li>
-                <li>Ensure NEXTAUTH_URL is set to <code className="bg-yellow-100 px-1 rounded">https://marketplace-pyg4.vercel.app</code> in Vercel environment variables</li>
+            <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded text-sm space-y-3">
+              <p className="font-semibold mb-2">Common causes and solutions:</p>
+              <ol className="list-decimal list-inside space-y-2">
+                <li className="mb-2">
+                  <strong>Verify Google Console redirect URI:</strong>
+                  <ul className="list-disc list-inside ml-4 mt-1 space-y-1">
+                    <li>Go to <a href="https://console.cloud.google.com" target="_blank" rel="noopener noreferrer" className="underline">Google Cloud Console</a></li>
+                    <li>Navigate to APIs & Services → Credentials</li>
+                    <li>Click on your OAuth 2.0 Client ID</li>
+                    <li>Ensure this redirect URI is added: <code className="bg-yellow-100 px-1 rounded">{typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.vercel.app'}/api/auth/callback/google</code></li>
+                    <li>Save and wait a few minutes for changes to propagate</li>
+                  </ul>
+                </li>
+                <li className="mb-2">
+                  <strong>Verify Vercel environment variables:</strong>
+                  <ul className="list-disc list-inside ml-4 mt-1 space-y-1">
+                    <li><code className="bg-yellow-100 px-1 rounded">NEXTAUTH_URL</code> = <code className="bg-yellow-100 px-1 rounded">{typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.vercel.app'}</code> (no trailing slash)</li>
+                    <li><code className="bg-yellow-100 px-1 rounded">NEXTAUTH_SECRET</code> is set</li>
+                    <li><code className="bg-yellow-100 px-1 rounded">GOOGLE_CLIENT_ID</code> matches your Google Console Client ID</li>
+                    <li><code className="bg-yellow-100 px-1 rounded">GOOGLE_CLIENT_SECRET</code> matches your Google Console Client Secret</li>
+                  </ul>
+                </li>
+                <li className="mb-2">
+                  <strong>After updating:</strong>
+                  <ul className="list-disc list-inside ml-4 mt-1 space-y-1">
+                    <li>Redeploy your Vercel application to pick up new environment variables</li>
+                    <li>Clear your browser cache and cookies</li>
+                    <li>Try signing in again</li>
+                  </ul>
+                </li>
               </ol>
+              <div className="bg-blue-50 border border-blue-200 text-blue-800 px-3 py-2 rounded mt-3 text-xs">
+                <strong>Note:</strong> If you're using a custom domain, make sure to add BOTH the Vercel URL and your custom domain to the redirect URIs in Google Console.
+              </div>
             </div>
           )}
           <div className="flex gap-4">
