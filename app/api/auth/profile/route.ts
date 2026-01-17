@@ -22,8 +22,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(user)
   } catch (error: any) {
     console.error('Get profile error:', error)
+    // Log more details for debugging
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+      stack: error.stack,
+    })
     return NextResponse.json(
-      { error: error.message || 'Failed to get profile' },
+      { 
+        error: error.message || 'Failed to get profile',
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      },
       { status: 500 }
     )
   }

@@ -35,8 +35,9 @@ export async function getCurrentUser() {
   }
 
   // Get or create user in Prisma from Supabase Auth
+  // First try to find by Supabase user ID (for users created via Supabase Auth)
   let user = await prisma.user.findUnique({
-    where: { email: session.user.email! },
+    where: { id: session.user.id },
     include: {
       roles: {
         where: { isActive: true },
@@ -45,7 +46,68 @@ export async function getCurrentUser() {
     },
   })
 
-  // If user doesn't exist in Prisma, create it
+  // If not found by ID, try to find by email (for users created via NextAuth or other methods)
+  if (!user) {
+    user = await prisma.user.findUnique({
+      where: { email: session.user.email! },
+      include: {
+        roles: {
+          where: { isActive: true },
+          select: { role: true },
+        },
+      },
+    })
+
+    // If found by email, update metadata (but keep existing ID - can't change primary key in Prisma)
+    if (user) {
+      try {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || user.name,
+            image: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture || user.image,
+            emailVerified: session.user.email_confirmed_at 
+              ? new Date(session.user.email_confirmed_at) 
+              : user.emailVerified,
+          },
+          include: {
+            roles: {
+              where: { isActive: true },
+              select: { role: true },
+            },
+          },
+        })
+      } catch (updateError: any) {
+        console.error('Failed to update user metadata:', updateError)
+        // Continue with existing user data if update fails
+      }
+    }
+  } else {
+    // User found by Supabase ID, update metadata
+    try {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || user.name,
+          image: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture || user.image,
+          emailVerified: session.user.email_confirmed_at 
+            ? new Date(session.user.email_confirmed_at) 
+            : user.emailVerified,
+        },
+        include: {
+          roles: {
+            where: { isActive: true },
+            select: { role: true },
+          },
+        },
+      })
+    } catch (updateError: any) {
+      console.error('Failed to update user metadata:', updateError)
+      // Continue with existing user data if update fails
+    }
+  }
+
+  // If user still doesn't exist, create it
   if (!user) {
     user = await prisma.user.create({
       data: {
@@ -67,18 +129,6 @@ export async function getCurrentUser() {
           where: { isActive: true },
           select: { role: true },
         },
-      },
-    })
-  } else {
-    // Update user data from Supabase Auth if needed
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || user.name,
-        image: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture || user.image,
-        emailVerified: session.user.email_confirmed_at 
-          ? new Date(session.user.email_confirmed_at) 
-          : user.emailVerified,
       },
     })
   }
