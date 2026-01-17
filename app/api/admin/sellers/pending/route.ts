@@ -1,4 +1,5 @@
 /**
+export const dynamic = 'force-dynamic'
  * Get Pending Seller Applications API
  * 
  * Returns all pending seller applications with user and shop information
@@ -7,6 +8,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {

@@ -1,4 +1,5 @@
 /**
+export const dynamic = 'force-dynamic'
  * Admin Pending Escrow Payments API
  * 
  * Get all orders with payments held in escrow that are ready for release
@@ -8,6 +9,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { PaymentStatus, EscrowStatus, OrderStatus } from '@prisma/client'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {

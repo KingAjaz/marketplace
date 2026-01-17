@@ -6,6 +6,8 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY
 
 export async function GET(request: NextRequest) {

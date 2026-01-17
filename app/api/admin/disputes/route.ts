@@ -1,4 +1,5 @@
 /**
+export const dynamic = 'force-dynamic'
  * Admin Disputes API
  * 
  * GET: Get all disputes with filtering
@@ -8,6 +9,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { DisputeStatus } from '@prisma/client'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {

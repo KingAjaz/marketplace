@@ -1,4 +1,5 @@
 /**
+export const dynamic = 'force-dynamic'
  * Advanced Product Search API
  * 
  * Enhanced search with multiple filters
@@ -6,6 +7,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { ProductCategory } from '@prisma/client'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {

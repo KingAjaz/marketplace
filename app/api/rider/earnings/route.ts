@@ -1,4 +1,5 @@
 /**
+export const dynamic = 'force-dynamic'
  * Rider Earnings API
  * 
  * GET: Get rider earnings breakdown by period
@@ -8,6 +9,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { DeliveryStatus, OrderStatus } from '@prisma/client'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
