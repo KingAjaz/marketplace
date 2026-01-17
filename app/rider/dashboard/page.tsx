@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/hooks/use-auth'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -25,7 +25,7 @@ interface Delivery {
 }
 
 export default function RiderDashboard() {
-  const { data: session, status: sessionStatus, update: updateSession } = useSession()
+  const { user, status: sessionStatus, refetch } = useAuth()
   const router = useRouter()
   const [deliveries, setDeliveries] = useState<Delivery[]>([])
   const [loading, setLoading] = useState(true)
@@ -49,11 +49,11 @@ export default function RiderDashboard() {
 
   // Refresh session on mount to ensure roles are up-to-date (in case user was just approved)
   useEffect(() => {
-    if (sessionStatus === 'authenticated' && session?.user && !sessionRefreshed) {
-      const hasRiderRole = session.user.roles?.includes('RIDER')
+    if (sessionStatus === 'authenticated' && user && !sessionRefreshed) {
+      const hasRiderRole = user.roles?.includes('RIDER')
       if (!hasRiderRole) {
-        // Try refreshing session once to get updated roles
-        updateSession()
+        // Try refreshing user data once to get updated roles
+        refetch()
           .then(() => {
             setSessionRefreshed(true)
           })
@@ -64,9 +64,9 @@ export default function RiderDashboard() {
       } else {
         setSessionRefreshed(true)
       }
-    } else if (sessionStatus === 'authenticated' && session?.user && sessionRefreshed) {
+    } else if (sessionStatus === 'authenticated' && user && sessionRefreshed) {
       // After refresh, check if user has rider role
-      const hasRiderRole = session.user.roles?.includes('RIDER')
+      const hasRiderRole = user.roles?.includes('RIDER')
       if (!hasRiderRole) {
         // Check application status
         fetch('/api/rider/status')
@@ -88,7 +88,7 @@ export default function RiderDashboard() {
           })
       }
     }
-  }, [sessionStatus, session, sessionRefreshed, updateSession, router])
+  }, [sessionStatus, user, sessionRefreshed, refetch, router])
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -98,11 +98,11 @@ export default function RiderDashboard() {
   }, [sessionStatus, router])
 
   useEffect(() => {
-    if (sessionStatus === 'authenticated' && session?.user?.roles?.includes('RIDER')) {
+    if (sessionStatus === 'authenticated' && user?.roles?.includes('RIDER')) {
       fetchDeliveries()
       fetchAvailability()
     }
-  }, [sessionStatus, session])
+  }, [sessionStatus, user])
 
   const fetchAvailability = async () => {
     try {
@@ -230,7 +230,7 @@ export default function RiderDashboard() {
   }
 
   // Don't render if user is not authenticated or not a rider (redirect will handle it)
-  if (sessionStatus === 'unauthenticated' || !session?.user?.roles?.includes('RIDER')) {
+  if (sessionStatus === 'unauthenticated' || !user?.roles?.includes('RIDER')) {
     return null
   }
 

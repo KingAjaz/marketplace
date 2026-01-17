@@ -1,16 +1,19 @@
 'use client'
 
 import { useState } from 'react'
-import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useCart } from '@/hooks/use-cart'
 import { useWishlist } from '@/hooks/use-wishlist'
+import { useAuth } from '@/hooks/use-auth'
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { ShoppingCart, User, Store, Package, Shield, MapPin, Heart, Menu, X } from 'lucide-react'
 import NotificationsDropdown from '@/components/notifications-dropdown'
 
 export function Navbar() {
-  const { data: session } = useSession()
+  const { user, status } = useAuth()
+  const router = useRouter()
   const { getItemCount } = useCart()
   const { items } = useWishlist()
   const cartCount = getItemCount()
@@ -18,13 +21,18 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const hasRole = (role: string) => {
-    return session?.user?.roles?.includes(role as any)
+    return user?.roles?.includes(role as any)
   }
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     setMobileMenuOpen(false)
-    signOut()
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/auth/signin')
+    router.refresh()
   }
+
+  const session = user ? { user } : null
 
   return (
     <nav className="border-b bg-white sticky top-0 z-50">

@@ -6,7 +6,7 @@
  * View all user notifications
  */
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/hooks/use-auth'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -39,7 +39,7 @@ function timeAgo(date: Date): string {
 }
 
 export default function NotificationsPage() {
-  const { data: session, status } = useSession()
+  const { user, status } = useAuth()
   const router = useRouter()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -51,10 +51,10 @@ export default function NotificationsPage() {
       router.push('/auth/signin')
       return
     }
-    if (session) {
+    if (user) {
       fetchNotifications()
     }
-  }, [session, status, router])
+  }, [user, status, router])
 
   const fetchNotifications = async () => {
     try {

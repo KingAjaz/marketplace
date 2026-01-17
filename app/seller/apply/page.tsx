@@ -8,7 +8,7 @@
  * Users must have completed their profile (phone number) before applying.
  */
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/hooks/use-auth'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -46,16 +46,16 @@ export default function SellerApplyPage() {
 
     if (status === 'authenticated') {
       // Check if user has phone number
-      if (!session?.user?.phoneNumber) {
+      if (!user?.phoneNumber) {
         console.log('No phone number, redirecting to complete profile')
         router.push('/auth/complete-profile?redirect=/seller/apply')
         return
       }
 
-      console.log('Phone number exists:', session.user.phoneNumber)
+      console.log('Phone number exists:', user.phoneNumber)
 
       // Check if user already has seller role
-      if (session.user.roles?.includes('SELLER')) {
+      if (user.roles?.includes('SELLER')) {
         router.push('/seller/dashboard')
         return
       }
@@ -63,7 +63,7 @@ export default function SellerApplyPage() {
       // Check application status
       checkApplicationStatus()
     }
-  }, [status, session, router])
+  }, [status, user, router])
 
   const checkApplicationStatus = async () => {
     try {

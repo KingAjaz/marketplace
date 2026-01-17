@@ -6,7 +6,7 @@
  * Manages wishlist state and operations
  */
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from './use-auth'
 import { useToast } from './use-toast'
 
 interface WishlistItem {
@@ -65,7 +65,7 @@ export function useWishlist() {
   }
 
   const isInWishlist = async (productId: string): Promise<boolean> => {
-    if (!session?.user) return false
+    if (!user) return false
 
     try {
       const response = await fetch(`/api/wishlist/check?productId=${productId}`)
@@ -80,7 +80,7 @@ export function useWishlist() {
   }
 
   const addToWishlist = async (productId: string) => {
-    if (!session?.user) {
+    if (!user) {
       toast({
         title: 'Login Required',
         description: 'Please log in to add items to your wishlist',
@@ -125,7 +125,7 @@ export function useWishlist() {
   }
 
   const removeFromWishlist = async (productId: string) => {
-    if (!session?.user) return false
+    if (!user) return false
 
     try {
       const response = await fetch(`/api/wishlist?productId=${productId}`, {

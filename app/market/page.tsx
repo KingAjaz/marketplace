@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Search, Store, Star, MapPin, Package } from 'lucide-react'
 import { formatDistance } from '@/lib/distance'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/hooks/use-auth'
 
 interface Shop {
   id: string
@@ -29,7 +29,7 @@ interface Shop {
 }
 
 export default function MarketPage() {
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const [shops, setShops] = useState<Shop[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -37,10 +37,10 @@ export default function MarketPage() {
 
   // Fetch user's default address location on mount
   useEffect(() => {
-    if (session?.user?.id) {
+    if (user?.id) {
       fetchUserLocation()
     }
-  }, [session])
+  }, [user])
 
   // Fetch shops on mount and when search changes
   // Don't wait for user location - fetch immediately

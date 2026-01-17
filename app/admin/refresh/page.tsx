@@ -3,10 +3,10 @@
 /**
  * Admin Session Refresh Page
  * 
- * This page helps refresh your session after adding an admin role.
- * It forces NextAuth to update the JWT token with fresh role data.
+ * This page helps refresh user data after adding an admin role.
+ * It forces a refresh of user data to get updated roles.
  */
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/hooks/use-auth'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { CheckCircle, XCircle, RefreshCw } from 'lucide-react'
 
 export default function AdminRefreshPage() {
-  const { data: session, status, update } = useSession()
+  const { user, status, refetch } = useAuth()
   const router = useRouter()
   const [refreshing, setRefreshing] = useState(false)
   const [message, setMessage] = useState('')
@@ -30,16 +30,16 @@ export default function AdminRefreshPage() {
     setMessage('')
     
     try {
-      // Force session update
-      await update()
-      setMessage('Session refreshed! Check your roles below.')
+      // Force user data refresh
+      await refetch()
+      setMessage('User data refreshed! Check your roles below.')
       
       // Wait a moment then redirect
       setTimeout(() => {
         router.push('/admin/dashboard')
       }, 2000)
     } catch (error) {
-      setMessage('Failed to refresh session. Please sign out and sign back in.')
+      setMessage('Failed to refresh user data. Please sign out and sign back in.')
     } finally {
       setRefreshing(false)
     }
@@ -60,7 +60,7 @@ export default function AdminRefreshPage() {
     return null
   }
 
-  const hasAdminRole = session?.user?.roles?.includes('ADMIN')
+  const hasAdminRole = user?.roles?.includes('ADMIN')
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
@@ -75,13 +75,13 @@ export default function AdminRefreshPage() {
           {/* Current Session Info */}
           <div className="space-y-3">
             <div>
-              <span className="font-medium">Email:</span> {session?.user?.email}
+              <span className="font-medium">Email:</span> {user?.email}
             </div>
             <div>
               <span className="font-medium">Current Roles:</span>
               <div className="mt-2 space-y-1">
-                {session?.user?.roles && session.user.roles.length > 0 ? (
-                  session.user.roles.map((role) => (
+                {user?.roles && user.roles.length > 0 ? (
+                  user.roles.map((role) => (
                     <div key={role} className="flex items-center gap-2">
                       {role === 'ADMIN' ? (
                         <CheckCircle className="h-4 w-4 text-green-500" />

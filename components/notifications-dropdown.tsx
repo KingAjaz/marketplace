@@ -6,7 +6,7 @@
  * Displays user notifications in a dropdown menu
  */
 import { useState, useEffect, useRef } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/hooks/use-auth'
 import { Bell, Check, CheckCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -115,7 +115,7 @@ export default function NotificationsDropdown() {
     }
   }
 
-  if (!session) return null
+  if (!user) return null
 
   return (
     <div className="relative" ref={dropdownRef}>

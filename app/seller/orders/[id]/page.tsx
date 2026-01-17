@@ -7,7 +7,7 @@
  */
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/hooks/use-auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
@@ -112,7 +112,7 @@ export default function SellerOrderDetailPage() {
   // Real-time order updates
   const { isConnected, lastUpdate } = useOrderStream({
     orderId,
-    enabled: !!order && !!session,
+    enabled: !!order && !!user,
     onUpdate: (update) => {
       if (update.type === 'order_status_update' && update.order) {
         setOrder((prev) => {

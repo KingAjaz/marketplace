@@ -6,7 +6,7 @@
  * Displays rider earnings breakdown, delivery history, and statistics
  */
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/hooks/use-auth'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -42,7 +42,7 @@ interface EarningsData {
 }
 
 export default function RiderEarningsPage() {
-  const { data: session, status } = useSession()
+  const { user, status } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
@@ -56,16 +56,16 @@ export default function RiderEarningsPage() {
       return
     }
 
-    if (status === 'authenticated' && session?.user) {
+    if (status === 'authenticated' && user) {
       // Check if user has rider role
-      if (!session.user.roles?.includes('RIDER')) {
+      if (!user.roles?.includes('RIDER')) {
         router.push('/unauthorized')
         return
       }
 
       fetchEarnings()
     }
-  }, [status, session, router, selectedPeriod])
+  }, [status, user, router, selectedPeriod])
 
   const fetchEarnings = async () => {
     setLoading(true)

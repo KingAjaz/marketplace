@@ -8,7 +8,7 @@
  * No OTP verification is required - phone number is stored directly.
  */
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/hooks/use-auth'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,7 +18,7 @@ import { normalizePhoneNumber, validateNigerianPhone } from '@/lib/utils'
 import { AddressAutocomplete } from '@/components/address-autocomplete'
 
 export default function CompleteProfilePage() {
-  const { data: session, status, update } = useSession()
+  const { user, status, refetch } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [phone, setPhone] = useState('')
@@ -47,13 +47,13 @@ export default function CompleteProfilePage() {
     
     if (status === 'authenticated') {
       // If phone number already exists, redirect to home or specified redirect
-      if (session?.user?.phoneNumber) {
+      if (user?.phoneNumber) {
         const redirect = searchParams.get('redirect')
         router.push(redirect || '/')
         return
       }
     }
-  }, [status, session, router, searchParams])
+  }, [status, user, router, searchParams])
 
   // Validate phone number format in real-time
   const handlePhoneChange = (value: string) => {
@@ -82,7 +82,7 @@ export default function CompleteProfilePage() {
     setValidationWarning('')
 
     // Check if user is authenticated
-    if (status !== 'authenticated' || !session) {
+    if (status !== 'authenticated' || !user) {
       setError('Please sign in to continue')
       router.push('/auth/signin')
       return
@@ -162,14 +162,14 @@ export default function CompleteProfilePage() {
       // Profile updated successfully
       setSuccess(true)
       
-      // Refresh session to get updated phoneNumber
+      // Refresh user data to get updated phoneNumber
       try {
-        await update()
-        // Wait a moment for session to fully update
+        await refetch()
+        // Wait a moment for data to fully update
         await new Promise(resolve => setTimeout(resolve, 1500))
       } catch (updateError) {
-        console.error('Session update error:', updateError)
-        // Continue even if session update fails - the data is saved
+        console.error('User data refresh error:', updateError)
+        // Continue even if refresh fails - the data is saved
       }
       
       // Redirect to specified page or home

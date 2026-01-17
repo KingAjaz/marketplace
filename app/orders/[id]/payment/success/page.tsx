@@ -8,7 +8,7 @@
  */
 import { useState, useEffect } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/hooks/use-auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
@@ -33,7 +33,7 @@ export default function PaymentSuccessPage() {
   const [order, setOrder] = useState<any>(null)
 
   useEffect(() => {
-    if (!session) {
+    if (status === 'unauthenticated' || !user) {
       router.push('/auth/signin')
       return
     }
@@ -44,7 +44,7 @@ export default function PaymentSuccessPage() {
       setError('Payment reference not found. Please check your order status.')
       setVerifying(false)
     }
-  }, [orderId, reference, session, router])
+  }, [orderId, reference, user, status, router])
 
   const verifyPayment = async () => {
     try {

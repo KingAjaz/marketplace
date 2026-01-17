@@ -9,8 +9,8 @@
  * - Enter delivery information manually
  */
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/use-auth'
 import { useCart } from '@/hooks/use-cart'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -38,7 +38,7 @@ interface Address {
 }
 
 export default function CheckoutPage() {
-  const { data: session } = useSession()
+  const { user, status } = useAuth()
   const router = useRouter()
   const { items, getTotal, clearCart } = useCart()
   const { toast } = useToast()
@@ -60,7 +60,11 @@ export default function CheckoutPage() {
   const [calculatingFee, setCalculatingFee] = useState(false)
 
   useEffect(() => {
-    if (!session) {
+    if (status === 'loading') {
+      return
+    }
+
+    if (!user || status === 'unauthenticated') {
       router.push('/auth/signin')
       return
     }
@@ -71,23 +75,23 @@ export default function CheckoutPage() {
     }
 
     // Redirect to profile completion if phone number is missing
-    if (!session.user?.phoneNumber) {
+    if (!user.phoneNumber) {
       router.push('/auth/complete-profile')
       return
     }
 
     // Pre-fill phone if available
-    if (session.user?.phoneNumber) {
+    if (user.phoneNumber) {
       setFormData((prev) => ({
         ...prev,
-        deliveryPhone: session.user.phoneNumber || '',
+        deliveryPhone: user.phoneNumber || '',
       }))
     }
 
     // Load saved addresses
     fetchAddresses()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, items.length, router])
+  }, [user, status, items.length, router])
 
   const calculateDeliveryFeeForAddress = async (
     shopId: string,
@@ -138,7 +142,7 @@ export default function CheckoutPage() {
             deliveryAddress: defaultAddress.addressText || defaultAddress.street,
             deliveryCity: defaultAddress.city,
             deliveryState: defaultAddress.state,
-            deliveryPhone: defaultAddress.phone || session?.user?.phoneNumber || '',
+            deliveryPhone: defaultAddress.phone || user?.phoneNumber || '',
             notes: defaultAddress.notes || '',
             deliveryLatitude: defaultAddress.latitude,
             deliveryLongitude: defaultAddress.longitude,
@@ -165,7 +169,7 @@ export default function CheckoutPage() {
       deliveryAddress: address.addressText || address.street,
       deliveryCity: address.city,
       deliveryState: address.state,
-      deliveryPhone: address.phone || session?.user?.phoneNumber || '',
+      deliveryPhone: address.phone || user?.phoneNumber || '',
       notes: address.notes || '',
       deliveryLatitude: address.latitude,
       deliveryLongitude: address.longitude,
@@ -185,7 +189,7 @@ export default function CheckoutPage() {
       deliveryAddress: '',
       deliveryCity: '',
       deliveryState: '',
-      deliveryPhone: session?.user?.phoneNumber || '',
+      deliveryPhone: user?.phoneNumber || '',
       notes: '',
       deliveryLatitude: null,
       deliveryLongitude: null,
@@ -318,7 +322,18 @@ export default function CheckoutPage() {
     }
   }
 
-  if (!session || items.length === 0) {
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p>Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user || items.length === 0) {
     return null
   }
 

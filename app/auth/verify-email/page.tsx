@@ -7,12 +7,12 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Mail, CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/hooks/use-auth'
 
 export default function VerifyEmailPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { data: session, update } = useSession()
+  const { user, refetch } = useAuth()
   const [token, setToken] = useState('')
   const [email, setEmail] = useState('')
   const [validating, setValidating] = useState(true)
@@ -93,9 +93,9 @@ export default function VerifyEmailPage() {
 
       setVerified(true)
       
-      // Update session to reflect email verification
-      if (session) {
-        await update()
+      // Refresh user data to reflect email verification
+      if (user) {
+        await refetch()
       }
 
       toast({

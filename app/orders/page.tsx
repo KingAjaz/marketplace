@@ -6,7 +6,7 @@
  * List all orders for the current buyer
  */
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/hooks/use-auth'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -69,11 +69,11 @@ export default function OrdersPage() {
       router.push('/auth/signin')
       return
     }
-    if (session) {
+    if (user) {
       fetchOrders()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, status, router, statusFilter, shopFilter, searchQuery, startDate, endDate, sortBy])
+  }, [user, status, router, statusFilter, shopFilter, searchQuery, startDate, endDate, sortBy])
 
   const fetchOrders = async () => {
     setLoading(true)

@@ -11,7 +11,7 @@
  * - Set default address
  */
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/hooks/use-auth'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -74,7 +74,7 @@ export default function AddressesPage() {
   const { toast } = useToast()
 
   useEffect(() => {
-    if (!session) {
+    if (status === 'unauthenticated' || !user) {
       router.push('/auth/signin')
       return
     }

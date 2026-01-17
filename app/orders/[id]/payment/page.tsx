@@ -7,7 +7,7 @@
  */
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/hooks/use-auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
@@ -44,25 +44,25 @@ interface Order {
 export default function PaymentPage() {
   const params = useParams()
   const router = useRouter()
-  const { data: session, status: sessionStatus } = useSession()
+  const { user, status: sessionStatus } = useAuth()
   const orderId = params.id as string
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
   const [order, setOrder] = useState<Order | null>(null)
   const [error, setError] = useState('')
 
-  console.log('PaymentPage mounted:', { orderId, sessionStatus, hasSession: !!session })
+  console.log('PaymentPage mounted:', { orderId, sessionStatus, hasUser: !!user })
 
   useEffect(() => {
-    console.log('PaymentPage useEffect triggered:', { orderId, sessionStatus, hasSession: !!session })
+    console.log('PaymentPage useEffect triggered:', { orderId, sessionStatus, hasUser: !!user })
     
     if (sessionStatus === 'loading') {
-      console.log('Session is loading, waiting...')
+      console.log('User data is loading, waiting...')
       return
     }
 
-    if (sessionStatus === 'unauthenticated' || !session) {
-      console.log('No session, redirecting to signin')
+    if (sessionStatus === 'unauthenticated' || !user) {
+      console.log('No user, redirecting to signin')
       router.push('/auth/signin')
       return
     }
@@ -76,7 +76,7 @@ export default function PaymentPage() {
 
     console.log('Fetching order for payment:', orderId)
     fetchOrder()
-  }, [orderId, sessionStatus, session, router, params])
+  }, [orderId, sessionStatus, user, router, params])
 
   const fetchOrder = async () => {
     console.log('=== fetchOrder called ===', { orderId, hasOrderId: !!orderId })

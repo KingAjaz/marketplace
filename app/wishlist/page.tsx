@@ -6,7 +6,7 @@
  * Displays user's saved products
  */
 import { useEffect, useState } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/hooks/use-auth'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -17,17 +17,17 @@ import { useWishlist } from '@/hooks/use-wishlist'
 import { useCart } from '@/hooks/use-cart'
 
 export default function WishlistPage() {
-  const { data: session } = useSession()
+  const { user, status } = useAuth()
   const router = useRouter()
   const { items, loading, removeFromWishlist, refreshWishlist } = useWishlist()
   const { addToCart } = useCart()
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    if (!session) {
+    if (status === 'unauthenticated') {
       router.push('/auth/signin')
     }
-  }, [session, router])
+  }, [status, router])
 
   const handleRemove = async (productId: string) => {
     setRemovingIds(prev => new Set(prev).add(productId))

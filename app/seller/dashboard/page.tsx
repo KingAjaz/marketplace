@@ -29,7 +29,7 @@ interface RecentOrder {
 }
 
 export default function SellerDashboard() {
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
   const [loading, setLoading] = useState(true)

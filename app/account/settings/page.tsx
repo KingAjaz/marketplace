@@ -30,7 +30,7 @@ interface UserProfile {
 }
 
 export default function AccountSettingsPage() {
-  const { data: session, status, update } = useSession()
+  const { user, status, refetch } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
@@ -179,8 +179,8 @@ export default function AccountSettingsPage() {
           setProfile(data.user)
         }
         
-        // Refresh session to get updated data
-        await update()
+        // Refresh user data to get updated data
+        await refetch()
         
         toast({
           title: 'Success',
@@ -794,7 +794,7 @@ export default function AccountSettingsPage() {
                   </p>
 
                   <div className="space-y-4">
-                    {session?.user?.email?.includes('@') && (
+                    {user?.email?.includes('@') && (
                       <div>
                         <Label htmlFor="delete-password">Password</Label>
                         <div className="relative mt-2">

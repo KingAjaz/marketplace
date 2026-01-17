@@ -6,7 +6,7 @@
  * Allows users to apply to become a delivery rider
  */
 import { useState } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/hooks/use-auth'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -17,7 +17,7 @@ import Link from 'next/link'
 import { useToast } from '@/hooks/use-toast'
 
 export default function RiderApplyPage() {
-  const { data: session, status } = useSession()
+  const { user, status } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -43,7 +43,7 @@ export default function RiderApplyPage() {
     return null
   }
 
-  if (!session?.user?.phoneNumber) {
+  if (!user?.phoneNumber) {
     router.push('/auth/complete-profile?redirect=/rider/apply')
     return null
   }

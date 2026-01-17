@@ -7,7 +7,7 @@
  */
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/hooks/use-auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -113,7 +113,7 @@ interface Order {
 export default function OrderDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const orderId = params.id as string
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
@@ -134,7 +134,7 @@ export default function OrderDetailPage() {
   // Real-time order updates
   const { isConnected, lastUpdate } = useOrderStream({
     orderId,
-    enabled: !!order && !!session,
+    enabled: !!order && !!user,
     onUpdate: (update) => {
       if (update.type === 'order_status_update' && update.order) {
         setOrder((prev) => {

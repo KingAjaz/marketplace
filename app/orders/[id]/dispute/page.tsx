@@ -7,7 +7,7 @@
  */
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/hooks/use-auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast'
 export default function CreateDisputePage() {
   const params = useParams()
   const router = useRouter()
-  const { data: session } = useSession()
+  const { user, status } = useAuth()
   const orderId = params.id as string
   const [loading, setLoading] = useState(false)
   const [order, setOrder] = useState<any>(null)
@@ -30,12 +30,12 @@ export default function CreateDisputePage() {
   const { toast } = useToast()
 
   useEffect(() => {
-    if (!session) {
+    if (status === 'unauthenticated' || !user) {
       router.push('/auth/signin')
       return
     }
     fetchOrder()
-  }, [orderId, session, router])
+  }, [orderId, user, status, router])
 
   const fetchOrder = async () => {
     try {
