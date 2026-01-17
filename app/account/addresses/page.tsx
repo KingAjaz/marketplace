@@ -49,7 +49,7 @@ interface Address {
 }
 
 export default function AddressesPage() {
-  const { data: session } = useSession()
+  const { user, status } = useAuth()
   const router = useRouter()
   const [addresses, setAddresses] = useState<Address[]>([])
   const [loading, setLoading] = useState(true)

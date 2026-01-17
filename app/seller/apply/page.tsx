@@ -148,7 +148,7 @@ export default function SellerApplyPage() {
   }
 
   // Show loading while checking if phone number exists (might be redirecting)
-  if (status === 'authenticated' && !session?.user?.phoneNumber) {
+  if (status === 'authenticated' && !user?.phoneNumber) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
