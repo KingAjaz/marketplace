@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { signIn, useSession } from 'next-auth/react'
+import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -10,13 +10,14 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function SignInPage() {
-  const { data: session, status } = useSession()
+  const supabase = createClient()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [checkingSession, setCheckingSession] = useState(true)
 
   // Check for OAuth error from query params
   useEffect(() => {
@@ -40,20 +41,34 @@ export default function SignInPage() {
     }
   }, [searchParams])
 
-  // Redirect if already authenticated
+  // Check if user is already authenticated
   useEffect(() => {
-    if (status === 'authenticated' && session) {
-      // If user has phone number, redirect to home or callback URL
-      if (session.user?.phoneNumber) {
-        const callbackUrl = searchParams.get('callbackUrl') || '/'
-        router.push(callbackUrl)
-        router.refresh()
-      } else {
-        // If no phone number, redirect to complete profile
-        router.push('/auth/complete-profile')
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          // Fetch user profile to check phone number
+          const response = await fetch('/api/auth/profile')
+          if (response.ok) {
+            const userData = await response.json()
+            if (userData.phoneNumber) {
+              const callbackUrl = searchParams.get('callbackUrl') || '/'
+              router.push(callbackUrl)
+            } else {
+              router.push('/auth/complete-profile')
+            }
+          } else {
+            router.push('/auth/complete-profile')
+          }
+        }
+      } catch (err) {
+        console.error('Session check error:', err)
+      } finally {
+        setCheckingSession(false)
       }
     }
-  }, [status, session, router, searchParams])
+    checkSession()
+  }, [supabase, router, searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -61,29 +76,36 @@ export default function SignInPage() {
     setLoading(true)
 
     try {
-      const result = await signIn('credentials', {
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
-        redirect: false,
       })
 
-      if (result?.error) {
-        setError(result.error)
-      } else {
-        // Refresh session to get updated user data
+      if (signInError) {
+        setError(signInError.message || 'Invalid email or password')
+        setLoading(false)
+        return
+      }
+
+      if (data.session) {
+        // Sync user with Prisma
+        await fetch('/api/auth/sync-user', { method: 'POST' })
+        
+        // Fetch user profile to check phone number
+        const response = await fetch('/api/auth/profile')
+        const userData = await response.ok ? await response.json() : null
+        
         router.refresh()
-        // Check if user has phone number
         const callbackUrl = searchParams.get('callbackUrl')
-        if (callbackUrl) {
-          router.push(callbackUrl)
+        
+        if (userData?.phoneNumber) {
+          router.push(callbackUrl || '/')
         } else {
-          // Redirect to complete profile if phone number is missing
-          // Otherwise redirect to home (will be handled by useEffect)
           router.push('/auth/complete-profile')
         }
       }
-    } catch (err) {
-      setError('An error occurred. Please try again.')
+    } catch (err: any) {
+      setError(err.message || 'An error occurred. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -92,14 +114,23 @@ export default function SignInPage() {
   const handleGoogleSignIn = async () => {
     setError('')
     try {
-      await signIn('google', { callbackUrl: '/auth/complete-profile' })
-    } catch (err) {
-      setError('Failed to sign in with Google')
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(searchParams.get('callbackUrl') || '/')}`,
+        },
+      })
+
+      if (oauthError) {
+        setError(oauthError.message || 'Failed to sign in with Google')
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign in with Google')
     }
   }
 
   // Show loading while checking session
-  if (status === 'loading') {
+  if (checkingSession) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -108,11 +139,6 @@ export default function SignInPage() {
         </div>
       </div>
     )
-  }
-
-  // Don't render if already authenticated (redirect will happen)
-  if (status === 'authenticated') {
-    return null
   }
 
   return (
