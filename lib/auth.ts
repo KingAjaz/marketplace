@@ -11,33 +11,31 @@ import { prisma } from './prisma'
 import bcrypt from 'bcryptjs'
 import { RoleType } from '@prisma/client'
 
-export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma) as any,
-  debug: process.env.NODE_ENV === 'development',
-  providers: [
-    CredentialsProvider({
-      name: 'Credentials',
-      credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('Email and password are required')
-        }
+// Build providers array conditionally
+const providers: any[] = [
+  CredentialsProvider({
+    name: 'Credentials',
+    credentials: {
+      email: { label: 'Email', type: 'email' },
+      password: { label: 'Password', type: 'password' },
+    },
+    async authorize(credentials) {
+      if (!credentials?.email || !credentials?.password) {
+        throw new Error('Email and password are required')
+      }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        })
+      const user = await prisma.user.findUnique({
+        where: { email: credentials.email },
+      })
 
-        if (!user || !user.password) {
-          throw new Error('Invalid email or password')
-        }
+      if (!user || !user.password) {
+        throw new Error('Invalid email or password')
+      }
 
-        const isValid = await bcrypt.compare(credentials.password, user.password)
-        if (!isValid) {
-          throw new Error('Invalid email or password')
-        }
+      const isValid = await bcrypt.compare(credentials.password, user.password)
+      if (!isValid) {
+        throw new Error('Invalid email or password')
+      }
 
       // Fetch email verification status
       const userData = await prisma.user.findUnique({
@@ -52,11 +50,17 @@ export const authOptions: NextAuthOptions = {
         image: user.image,
         emailVerified: userData?.emailVerified || null,
       }
-      },
-    }),
+    },
+  }),
+]
+
+// Only add GoogleProvider if credentials are configured
+// During migration to Supabase Auth, Google OAuth may not be configured in NextAuth
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  providers.push(
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || '',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       authorization: {
         params: {
           prompt: 'consent',
@@ -64,8 +68,14 @@ export const authOptions: NextAuthOptions = {
           response_type: 'code',
         },
       },
-    }),
-  ],
+    })
+  )
+}
+
+export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma) as any,
+  debug: process.env.NODE_ENV === 'development',
+  providers,
   session: {
     strategy: 'jwt',
   },

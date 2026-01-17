@@ -9,7 +9,7 @@ import { AlertCircle } from 'lucide-react'
 const errorMessages: { [key: string]: { title: string; message: string } } = {
   Configuration: {
     title: 'Configuration Error',
-    message: 'There is a problem with the server configuration. Please contact support.',
+    message: 'There is a problem with the server configuration. This usually means NEXTAUTH_SECRET, GOOGLE_CLIENT_ID, or GOOGLE_CLIENT_SECRET is missing or incorrectly configured.',
   },
   AccessDenied: {
     title: 'Access Denied',
@@ -57,7 +57,7 @@ const errorMessages: { [key: string]: { title: string; message: string } } = {
   },
 }
 
-export default function AuthErrorPage() {
+function AuthErrorContent() {
   const searchParams = useSearchParams()
   const error = searchParams.get('error') || 'Unknown'
   const errorInfo = errorMessages[error] || {
@@ -78,6 +78,37 @@ export default function AuthErrorPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {error === 'Configuration' && (
+            <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded text-sm space-y-3">
+              <p className="font-semibold mb-2">Configuration Error - Common causes:</p>
+              <ol className="list-decimal list-inside space-y-2">
+                <li className="mb-2">
+                  <strong>Missing NEXTAUTH_SECRET:</strong>
+                  <ul className="list-disc list-inside ml-4 mt-1 space-y-1">
+                    <li>Go to Vercel Dashboard → Project Settings → Environment Variables</li>
+                    <li>Add <code className="bg-red-100 px-1 rounded">NEXTAUTH_SECRET</code> with a random 32+ character string</li>
+                    <li>Generate one with: <code className="bg-red-100 px-1 rounded">openssl rand -base64 32</code></li>
+                    <li>Redeploy after adding</li>
+                  </ul>
+                </li>
+                <li className="mb-2">
+                  <strong>Missing or empty GOOGLE_CLIENT_ID/SECRET:</strong>
+                  <ul className="list-disc list-inside ml-4 mt-1 space-y-1">
+                    <li>If using Google OAuth through NextAuth, ensure both are set in Vercel environment variables</li>
+                    <li>Note: Google OAuth is now handled by Supabase Auth - you may not need these in NextAuth</li>
+                  </ul>
+                </li>
+                <li className="mb-2">
+                  <strong>Migration to Supabase Auth in progress:</strong>
+                  <ul className="list-disc list-inside ml-4 mt-1 space-y-1">
+                    <li>During migration, NextAuth is temporarily needed for middleware and some API routes</li>
+                    <li>Ensure <code className="bg-red-100 px-1 rounded">NEXTAUTH_SECRET</code> is set in Vercel</li>
+                    <li>Once migration is complete, NextAuth will be removed</li>
+                  </ul>
+                </li>
+              </ol>
+            </div>
+          )}
           {error === 'Callback' && (
             <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded text-sm space-y-3">
               <p className="font-semibold mb-2">Common causes and solutions:</p>
@@ -126,5 +157,22 @@ export default function AuthErrorPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function AuthErrorPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <AuthErrorContent />
+    </Suspense>
   )
 }
