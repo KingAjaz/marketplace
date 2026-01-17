@@ -113,7 +113,7 @@ interface Order {
 export default function OrderDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, status } = useAuth()
   const orderId = params.id as string
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
@@ -193,12 +193,14 @@ export default function OrderDetailPage() {
   })
 
   useEffect(() => {
-    if (!session) {
+    if (status === 'unauthenticated') {
       router.push('/auth/signin')
       return
     }
-    fetchOrder()
-  }, [orderId, session, router])
+    if (status === 'authenticated' && user) {
+      fetchOrder()
+    }
+  }, [orderId, status, user, router])
 
   const fetchOrder = async () => {
     try {
